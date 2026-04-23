@@ -1,0 +1,4 @@
+/* Finance-scoped styles — injected via tailwind @apply in page */
+.input {
+  @apply w-full bg-[#313244] border border-gray-600 rounded px-3 py-2 text-white;
+}

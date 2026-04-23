@@ -1,0 +1,12 @@
+node_modules
+.next
+dist
+build
+.env
+.env.local
+.env.example
+*.tsbuildinfo
+.turbo
+.expo
+android
+ios

@@ -1,0 +1,97 @@
+Notes App — Status as of 2026-04-23
+=====================================
+
+WHAT WORKS
+----------
+- Notes (web): create, edit with TipTap rich text editor, auto-save, delete
+- Notes (mobile): create, edit plain text, debounced auto-save + manual Save button
+- Cross-platform notes: notes written on web show correctly on phone (TipTap JSON
+  converted to plain text with headings/bullets), and phone notes show on web
+- Auth: Supabase login on both web and mobile
+- OTA updates: JS code changes push to phone without reinstalling the APK
+
+
+WHAT DOES NOT WORK
+------------------
+- Controller tab: phone and web cannot communicate in real time
+
+  Both transports have been tried:
+    - polling (HTTP):   "xhr poll error"  — HTTP POST to local backend fails
+    - websocket (WS):  "websocket error" — WebSocket upgrade to local backend fails
+
+  The phone browser can open http://192.168.12.1:4000 and get a valid response,
+  which means the backend is reachable at the network level. The failure is
+  specific to React Native's networking stack (OkHttp on Android), which has
+  different behavior from the phone's Chrome browser even for the same URL.
+
+  usesCleartextTraffic: true is set in the APK (app.json android section) but
+  has not resolved the issue.
+
+
+ARCHITECTURE
+------------
+  Web app:  Next.js + Supabase client + TipTap (http://localhost:3000 in dev)
+  Mobile:   Expo/React Native + Supabase client + socket.io-client
+  Backend:  Node.js Express + socket.io server (must run manually on laptop)
+  Database: Supabase (Postgres + Row Level Security + Auth)
+  OTA:      EAS Update, preview channel, runtimeVersion policy = appVersion
+
+  Controller flow (when working):
+    Phone ─── socket.io ──▶ Backend (laptop) ─── socket.io ──▶ Web browser
+    Both sides call socket.emit('controller:join', roomId) to enter a shared room.
+    Button events are broadcast to everyone else in that room.
+    The backend is a relay — it does not persist anything.
+
+
+ATTEMPTED FIXES FOR CONTROLLER
+-------------------------------
+  1. Backend was not running → started pnpm dev, fixed initial error
+  2. XHR poll error remained → switched to WebSocket-only transport
+  3. Websocket error appeared → identified Android cleartext HTTP restriction
+  4. Added usesCleartextTraffic: true in app.json → rebuilt and reinstalled APK
+  5. Still websocket error with new APK → reverted to polling+websocket
+  6. Still xhr poll error → root cause not yet fully resolved
+
+
+POSSIBLE NEXT STEPS FOR CONTROLLER
+------------------------------------
+  Option A — Supabase Realtime (RECOMMENDED)
+    Replace socket.io with supabase.channel() broadcast messages.
+    Works over HTTPS/WSS to Supabase's servers — no cleartext issues.
+    No local backend required at all for the controller feature.
+    Phone and web both connect to the cloud, works from any network.
+    API is simple: channel.send({ type:'broadcast', event:'button', payload:{...} })
+
+  Option B — Deploy backend to a cloud server (Render / Railway / Fly.io)
+    Backend runs on HTTPS (wss://) so Android cleartext restriction is irrelevant.
+    Free-tier hosting available on Render or Railway.
+    socket.io code on both sides stays the same; only the URL changes.
+    Requires a public server running permanently.
+
+  Option C — Expo network_security_config plugin
+    A custom res/xml/network_security_config.xml explicitly permits cleartext
+    to 192.168.0.0/16 (local subnets). More explicit than usesCleartextTraffic.
+    Requires another EAS rebuild. Still requires local backend + same IP each time.
+
+
+RUNNING THE APP LOCALLY
+-----------------------
+  Backend:  pnpm --filter backend dev          (from repo root)
+  Web:      pnpm --filter web dev              (opens on http://localhost:3000)
+  Mobile:   already installed; OTA updates on app launch automatically
+  Login:    use your Supabase account credentials
+
+
+GITHUB SAFETY NOTES
+-------------------
+  Safe to push — these files are excluded by .gitignore:
+    backend/.env          ← contains SUPABASE_SERVICE_ROLE_KEY (full DB access, dangerous)
+    apps/mobile/.env      ← Supabase anon key + notes password
+    apps/web/.env.local   ← same
+
+  SUPABASE_SERVICE_ROLE_KEY bypasses all Row Level Security. Never commit it.
+
+  SUPABASE_ANON_KEY is a public key by design (safe in client code) but is still
+  excluded from git as good practice.
+
+  app.json contains the Expo project ID — not sensitive, safe to commit.

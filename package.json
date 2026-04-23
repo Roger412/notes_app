@@ -1,0 +1,25 @@
+{
+  "name": "notes-app",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:mobile": "pnpm --filter mobile dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.4.0"
+  },
+  "packageManager": "pnpm@9.1.0",
+  "pnpm": {
+    "overrides": {
+      "react": "18.3.1",
+      "react-dom": "18.3.1",
+      "@types/react": "^18.3.0",
+      "@types/react-dom": "^18.3.0"
+    }
+  }
+}
