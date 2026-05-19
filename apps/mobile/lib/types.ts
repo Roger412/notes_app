@@ -55,3 +55,10 @@ export interface ButtonPressEvent {
   pressed: boolean
   timestamp: number
 }
+
+export interface AudioChunkEvent {
+  data: string
+  format: 'm4a'
+  timestamp: number
+  durationMs: number
+}

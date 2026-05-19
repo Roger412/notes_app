@@ -10,6 +10,13 @@ export interface ButtonPressEvent {
   timestamp: number
 }
 
+export interface AudioChunkEvent {
+  data: string
+  format: 'm4a'
+  timestamp: number
+  durationMs: number
+}
+
 export interface ServerToClientEvents {
   'controller:button': (event: ButtonPressEvent) => void
   'controller:connected': (deviceId: string) => void

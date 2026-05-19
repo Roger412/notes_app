@@ -4,6 +4,38 @@ A cross-platform notes, finance, and game-controller app built on Supabase, with
 
 ---
 
+## Running the Web App
+
+```bash
+# From the repo root, install workspace dependencies (only needed once)
+pnpm install
+
+# Start the Next.js dev server
+cd apps/web
+pnpm dev
+```
+
+Then open <http://localhost:3000> in your browser and sign in with your Supabase account (the same one you use on the phone). The dev server hot-reloads on file changes.
+
+**Pages:**
+- `/notes` — rich-text notes editor
+- `/finance` — income / expense tracker
+- `/controller` — receives phone button + audio events, optionally forwards to ROS2
+
+**Optional — ROS2 forwarding on the Controller page:**
+1. On the ROS2 machine, run `ros2 launch rosbridge_server rosbridge_websocket_launch.xml`.
+2. In the web Controller page, flip the **ROS2 Bridge** toggle. Defaults: `ws://localhost:9090`, button topic `/controller/buttons`, audio topic `/voice_audio`.
+3. On the phone Controller tab, type the same Room ID and **Join** to send button presses or hold-to-talk audio.
+
+**Other commands:**
+```bash
+pnpm build         # production build
+pnpm start         # serve the production build
+pnpm lint          # next lint
+```
+
+---
+
 ## 1. High-Level System Architecture
 
 Two user-facing clients share one cloud backend (Supabase). A local Node.js server exists but is currently unused by the clients. A separate ROS2 bridge is only needed for robotics integration.
